@@ -22,14 +22,17 @@ export default async function ReportsPage() {
                   <span className="text-slate-500">{r.createdAt.toISOString().slice(0, 10)}</span>
                 </div>
                 <pre className="mt-2 whitespace-pre-wrap text-xs text-slate-700">{r.summary}</pre>
-                {Array.isArray((r.payload as any)?.recommendations) && (
-                  <div className="mt-2">
-                    <p className="text-xs font-semibold uppercase text-slate-500">Recommendations</p>
-                    <ul className="ml-4 list-disc text-sm">
-                      {(r.payload as any).recommendations.map((rec: string, i: number) => <li key={i}>{rec}</li>)}
-                    </ul>
-                  </div>
-                )}
+                {(() => {
+                  const parsed = typeof r.payload === "string" ? JSON.parse(r.payload) : r.payload;
+                  return Array.isArray(parsed?.recommendations) ? (
+                    <div className="mt-2">
+                      <p className="text-xs font-semibold uppercase text-slate-500">Recommendations</p>
+                      <ul className="ml-4 list-disc text-sm">
+                        {parsed.recommendations.map((rec: string, i: number) => <li key={i}>{rec}</li>)}
+                      </ul>
+                    </div>
+                  ) : null;
+                })()}
               </li>
             ))}
           </ul>

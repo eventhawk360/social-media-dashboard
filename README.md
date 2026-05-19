@@ -9,17 +9,31 @@ it in Postgres, and serves:
 - **Reports** — auto-generated weekly + monthly digests with recommendations
 - **Alerts** — top performers, underperformers, low-engagement flags
 
-## Quickstart
+## Quickstart (local SQLite — zero setup)
 
 ```bash
 npm install
-cp .env.example .env
-# fill in DATABASE_URL (local Postgres, Neon, Supabase, or Vercel Postgres)
+echo 'DATABASE_URL="file:./dev.db"' > .env
+echo 'INGEST_SECRET="local"'        >> .env
 
-npm run db:push      # apply schema
-npm run db:seed      # load the spreadsheet snapshot into the DB
+npm run db:push      # creates ./dev.db
+npm run db:seed      # loads the spreadsheet snapshot
 npm run dev          # http://localhost:3000
 ```
+
+## Production (Postgres)
+
+Swap the provider in `prisma/schema.prisma`:
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+Then set `DATABASE_URL` to your Neon / Supabase / Vercel Postgres connection string
+and rerun `npm run db:push && npm run db:seed`.
 
 ## Pulling live data
 

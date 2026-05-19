@@ -1,9 +1,8 @@
 import { prisma } from "./db";
-import { engagementRate, performanceRank } from "./scoring";
-import type { Performance, Platform } from "@prisma/client";
+import { engagementRate, performanceRank, type Platform, type Performance } from "./scoring";
 
 export type PlatformTotals = {
-  platform: Platform;
+  platform: string;
   posts: number;
   reach: number;
   viewers: number;
@@ -38,8 +37,8 @@ export type CampaignSummary = {
   totalReach: number;
   totalViewers: number;
   avgEngagement: number;
-  bestPerformance: Performance | null;
-  platforms: Platform[];
+  bestPerformance: string | null;
+  platforms: string[];
 };
 
 export async function campaignSummaries(): Promise<CampaignSummary[]> {
@@ -53,7 +52,7 @@ export async function campaignSummaries(): Promise<CampaignSummary[]> {
     const totalViewers = c.posts.reduce((acc, p) => acc + (p.viewers ?? 0), 0);
     const best = c.posts
       .map((p) => p.performance)
-      .reduce<Performance | null>(
+      .reduce<string | null>(
         (acc, perf) => (performanceRank(perf) > performanceRank(acc) ? perf : acc),
         null,
       );
@@ -74,11 +73,11 @@ export async function campaignSummaries(): Promise<CampaignSummary[]> {
 export type RankedPost = {
   id: string;
   campaign: string;
-  platform: Platform;
+  platform: string;
   reach: number;
   viewers: number;
   engagement: number;
-  performance: Performance | null;
+  performance: string | null;
   publishedAt: Date | null;
 };
 

@@ -3,39 +3,23 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum Platform {
-  facebook
-  instagram
-  tiktok
-  youtube
-  all
-}
-
-enum PostType {
-  post
-  ad
-  reel
-  story
-}
-
-enum Performance {
-  bad
-  regular
-  good
-  excellent
-}
+// SQLite has no native enums or Json type. We keep these as strings; the
+// TypeScript layer in src/lib/scoring.ts enforces the allowed values.
+// Platform: facebook | instagram | tiktok | youtube | all
+// PostType: post | ad | reel | story
+// Performance: bad | regular | good | excellent
 
 model Campaign {
   id          String   @id @default(cuid())
   name        String   @unique
   purpose     String?
-  audience    String?  // e.g. "Party Rental Business Owners"
+  audience    String?
   landingPage String?
-  assets      String?  // link or note about creatives
+  assets      String?
   startDate   DateTime?
   endDate     DateTime?
   createdAt   DateTime @default(now())
@@ -48,25 +32,24 @@ model Post {
   campaignId    String
   campaign      Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
-  platform      Platform
-  postType      PostType     @default(post)
-  externalId    String?      // platform-side post/ad id, used for idempotent ingestion
+  platform      String
+  postType      String       @default("post")
+  externalId    String?
   permalink     String?
-  caption       String?      @db.Text
-  headline      String?      @db.Text
+  caption       String?
+  headline      String?
   cta           String?
   ctaLink       String?
 
   publishedAt   DateTime?
-  // Latest metric snapshot (denormalized for fast dashboard queries)
   reach         Int?
-  viewers       Int?         // impressions / views
+  viewers       Int?
   ctrLink       Float?
   landingCtr    Float?
   meetings      Int?         @default(0)
-  performance   Performance?
+  performance   String?
 
-  notes         String?      @db.Text
+  notes         String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -77,7 +60,6 @@ model Post {
   @@index([platform, publishedAt])
 }
 
-// Time-series snapshots so we can chart trends and detect regressions
 model MetricSnapshot {
   id          String   @id @default(cuid())
   postId      String
@@ -97,28 +79,26 @@ model MetricSnapshot {
   @@index([postId, capturedAt])
 }
 
-// Persisted alerts (best/worst flags, anomalies)
 model Alert {
   id         String   @id @default(cuid())
   postId     String?
   campaignId String?
-  kind       String   // "top_performer" | "underperformer" | "drop" | "spike"
+  kind       String
   message    String
-  severity   String   // "info" | "warn" | "critical"
+  severity   String
   createdAt  DateTime @default(now())
   resolvedAt DateTime?
 
   @@index([createdAt])
 }
 
-// Stored weekly/monthly report digests
 model Report {
   id          String   @id @default(cuid())
   periodStart DateTime
   periodEnd   DateTime
-  kind        String   // "weekly" | "monthly" | "campaign"
-  summary     String   @db.Text
-  payload     Json     // structured JSON: best, worst, totals, per-platform, recommendations
+  kind        String
+  summary     String
+  payload     String   // JSON-encoded string (sqlite has no Json type)
   createdAt   DateTime @default(now())
 
   @@unique([kind, periodStart])

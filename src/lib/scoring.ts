@@ -1,13 +1,14 @@
-import type { Performance, Post } from "@prisma/client";
+import type { Post } from "@prisma/client";
 
-// Engagement rate = (reach / viewers) treated as a baseline proxy when no explicit
-// likes/comments/clicks are available. When metrics fill in, swap to (engagements / reach).
+export type Platform = "facebook" | "instagram" | "tiktok" | "youtube" | "all";
+export type PostType = "post" | "ad" | "reel" | "story";
+export type Performance = "bad" | "regular" | "good" | "excellent";
+
 export function engagementRate(p: Pick<Post, "reach" | "viewers">): number | null {
   if (!p.viewers || p.viewers <= 0 || p.reach == null) return null;
   return p.reach / p.viewers;
 }
 
-// Map free-text "good/regular/bad/excellent" notes from the spreadsheet to enum.
 export function parsePerformanceNote(raw: string | undefined | null): Performance | null {
   if (!raw) return null;
   const t = raw.toLowerCase();
@@ -18,8 +19,6 @@ export function parsePerformanceNote(raw: string | undefined | null): Performanc
   return null;
 }
 
-// Threshold-based classifier used when ingesting fresh metrics from APIs.
-// Tunable; defaults chosen from the patterns in the seed data.
 export function classifyPerformance(
   reach: number | null | undefined,
   viewers: number | null | undefined,
@@ -33,7 +32,7 @@ export function classifyPerformance(
   return "bad";
 }
 
-export function performanceRank(p: Performance | null | undefined): number {
+export function performanceRank(p: string | null | undefined): number {
   switch (p) {
     case "excellent": return 3;
     case "good": return 2;

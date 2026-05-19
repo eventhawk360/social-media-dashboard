@@ -62,10 +62,11 @@ export async function buildReport(kind: ReportKind, periodEnd = new Date()) {
     recommendations,
   };
 
+  const payloadJson = JSON.stringify(payload);
   const report = await prisma.report.upsert({
     where: { kind_periodStart: { kind, periodStart } },
-    create: { kind, periodStart, periodEnd, summary, payload: payload as any },
-    update: { periodEnd, summary, payload: payload as any },
+    create: { kind, periodStart, periodEnd, summary, payload: payloadJson },
+    update: { periodEnd, summary, payload: payloadJson },
   });
 
   return report;

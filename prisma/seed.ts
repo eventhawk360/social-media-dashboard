@@ -1,4 +1,5 @@
-import { PrismaClient, Platform, PostType, Performance } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import type { Platform, PostType, Performance } from "../src/lib/scoring";
 
 const prisma = new PrismaClient();
 
@@ -17,7 +18,7 @@ type Row = {
   reach?: number;
   viewers?: number;
   performance?: Performance;
-  publishedAt?: string; // ISO
+  publishedAt?: string;
   notes?: string;
 };
 
