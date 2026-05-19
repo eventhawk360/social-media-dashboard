@@ -1,0 +1,7 @@
+{
+  "crons": [
+    { "path": "/api/ingest", "schedule": "0 */6 * * *" },
+    { "path": "/api/reports/generate?kind=weekly", "schedule": "0 13 * * 1" },
+    { "path": "/api/reports/generate?kind=monthly", "schedule": "0 13 1 * *" }
+  ]
+}

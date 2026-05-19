@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  facebook
+  instagram
+  tiktok
+  youtube
+  all
+}
+
+enum PostType {
+  post
+  ad
+  reel
+  story
+}
+
+enum Performance {
+  bad
+  regular
+  good
+  excellent
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  purpose     String?
+  audience    String?  // e.g. "Party Rental Business Owners"
+  landingPage String?
+  assets      String?  // link or note about creatives
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  posts       Post[]
+}
+
+model Post {
+  id            String       @id @default(cuid())
+  campaignId    String
+  campaign      Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  platform      Platform
+  postType      PostType     @default(post)
+  externalId    String?      // platform-side post/ad id, used for idempotent ingestion
+  permalink     String?
+  caption       String?      @db.Text
+  headline      String?      @db.Text
+  cta           String?
+  ctaLink       String?
+
+  publishedAt   DateTime?
+  // Latest metric snapshot (denormalized for fast dashboard queries)
+  reach         Int?
+  viewers       Int?         // impressions / views
+  ctrLink       Float?
+  landingCtr    Float?
+  meetings      Int?         @default(0)
+  performance   Performance?
+
+  notes         String?      @db.Text
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  metrics       MetricSnapshot[]
+
+  @@unique([platform, externalId])
+  @@index([campaignId])
+  @@index([platform, publishedAt])
+}
+
+// Time-series snapshots so we can chart trends and detect regressions
+model MetricSnapshot {
+  id          String   @id @default(cuid())
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  capturedAt  DateTime @default(now())
+  reach       Int?
+  viewers     Int?
+  likes       Int?
+  comments    Int?
+  shares      Int?
+  saves       Int?
+  clicks      Int?
+  ctrLink     Float?
+  landingCtr  Float?
+  meetings    Int?
+
+  @@index([postId, capturedAt])
+}
+
+// Persisted alerts (best/worst flags, anomalies)
+model Alert {
+  id         String   @id @default(cuid())
+  postId     String?
+  campaignId String?
+  kind       String   // "top_performer" | "underperformer" | "drop" | "spike"
+  message    String
+  severity   String   // "info" | "warn" | "critical"
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+
+  @@index([createdAt])
+}
+
+// Stored weekly/monthly report digests
+model Report {
+  id          String   @id @default(cuid())
+  periodStart DateTime
+  periodEnd   DateTime
+  kind        String   // "weekly" | "monthly" | "campaign"
+  summary     String   @db.Text
+  payload     Json     // structured JSON: best, worst, totals, per-platform, recommendations
+  createdAt   DateTime @default(now())
+
+  @@unique([kind, periodStart])
+}
