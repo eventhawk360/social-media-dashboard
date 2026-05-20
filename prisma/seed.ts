@@ -180,7 +180,78 @@ async function main() {
     }
   }
 
+  await seedLiveDemo();
+
   console.log("Seed complete.");
+}
+
+// Recent posts with snapshot history so the /live page has momentum to rank.
+// These simulate what real Meta/TikTok ingestion produces: a post row plus
+// periodic MetricSnapshot rows. Remove this once live API ingestion is wired.
+async function seedLiveDemo() {
+  const hoursAgo = (h: number) => new Date(Date.now() - h * 3_600_000);
+
+  const demo: {
+    campaign: string;
+    platform: Platform;
+    caption: string;
+    publishedHrs: number;
+    // snapshots: [hoursAgo, viewers, reach]
+    snapshots: [number, number, number][];
+  }[] = [
+    {
+      campaign: "Spring Bookings Push",
+      platform: "facebook",
+      caption: "Lock in your spring & summer event dates now — calendars fill fast.",
+      publishedHrs: 5,
+      snapshots: [[4, 320, 240], [2, 980, 690], [0.2, 2150, 1480]],
+    },
+    {
+      campaign: "Spring Bookings Push",
+      platform: "instagram",
+      caption: "Lock in your spring & summer event dates now — calendars fill fast.",
+      publishedHrs: 5,
+      snapshots: [[4, 140, 110], [2, 410, 300], [0.2, 760, 540]],
+    },
+    {
+      campaign: "Behind the Scenes Reel",
+      platform: "instagram",
+      caption: "How we set up a 40-unit party rental order in under 2 hours.",
+      publishedHrs: 26,
+      snapshots: [[24, 1900, 1500], [12, 3100, 2400], [0.5, 3260, 2510]],
+    },
+    {
+      campaign: "Customer Story",
+      platform: "facebook",
+      caption: "Meet a party rental owner who doubled weekend bookings.",
+      publishedHrs: 0.4,
+      snapshots: [[0.1, 60, 48]],
+    },
+  ];
+
+  for (const d of demo) {
+    const campaign = await prisma.campaign.upsert({
+      where: { name: d.campaign },
+      create: { name: d.campaign, audience: "Party Rental Business Owners", purpose: "bookings" },
+      update: {},
+    });
+    const last = d.snapshots[d.snapshots.length - 1];
+    const post = await prisma.post.create({
+      data: {
+        campaignId: campaign.id,
+        platform: d.platform,
+        caption: d.caption,
+        publishedAt: hoursAgo(d.publishedHrs),
+        viewers: last[1],
+        reach: last[2],
+      },
+    });
+    for (const [h, viewers, reach] of d.snapshots) {
+      await prisma.metricSnapshot.create({
+        data: { postId: post.id, capturedAt: hoursAgo(h), viewers, reach },
+      });
+    }
+  }
 }
 
 main()

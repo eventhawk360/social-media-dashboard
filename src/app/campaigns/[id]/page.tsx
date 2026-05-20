@@ -6,9 +6,10 @@ import { engagementRate } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 
-export default async function CampaignDetail({ params }: { params: { id: string } }) {
+export default async function CampaignDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const campaign = await prisma.campaign.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { posts: { include: { metrics: { orderBy: { capturedAt: "asc" } } } } },
   });
   if (!campaign) return notFound();

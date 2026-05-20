@@ -16,6 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Link href="/" className="text-lg font-semibold">Social Media Dashboard</Link>
             <nav className="flex gap-4 text-sm">
               <Link href="/" className="hover:underline">Overview</Link>
+              <Link href="/live" className="hover:underline">Live</Link>
               <Link href="/campaigns" className="hover:underline">Campaigns</Link>
               <Link href="/reports" className="hover:underline">Reports</Link>
               <Link href="/alerts" className="hover:underline">Alerts</Link>
