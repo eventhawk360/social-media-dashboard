@@ -46,6 +46,9 @@ Fill the platform credentials in `.env`:
 | TikTok    | `TIKTOK_ACCESS_TOKEN`, `TIKTOK_BUSINESS_ID` |
 | YouTube   | `YOUTUBE_API_KEY`, `YOUTUBE_CHANNEL_ID` |
 
+**Step-by-step for Facebook + Instagram credentials and the webhook:
+see [`docs/META_SETUP.md`](docs/META_SETUP.md).**
+
 Run ingestion once:
 
 ```bash
